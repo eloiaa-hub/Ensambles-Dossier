@@ -1,0 +1,32 @@
+ENSAMBLES DE CARPINTERÍA · Por Eloi A.A.
+=========================================
+
+Contenido de la carpeta
+-----------------------
+index.html                     Página de inicio con los 21 ensambles.
+ensambles_3d.html              Versión del profesor: visor 3D, medidas, planos, cuaderno, DXF y proceso manual.
+ensambles_3d_alumno.html       Versión del alumnado (adaptada al móvil): visor 3D, montaje, paso a paso y proceso manual.
+manual_ensambles.html / .pdf   Manual de uso del programa.
+apuntes_ensambles_a_mano.html / .pdf
+                               Apuntes: los 21 ensambles hechos a mano, paso a paso.
+modelos/                       Modelos 3D de las herramientas (lápiz, escuadra, falsa escuadra, gramil, formón, serrucho de costilla).
+  herramientas_glb.js          Los mismos modelos preparados para que el programa los cargue (también con doble clic, sin servidor).
+  *.glb                        Modelos originales optimizados, por si se quieren editar o sustituir.
+
+Cómo usarlo
+-----------
+- En el ordenador: abrir el archivo HTML con doble clic (Chrome, Edge o Firefox). No necesita internet.
+- En Aules: subir la carpeta completa (por ejemplo, como recurso «Carpeta», o un ZIP descomprimido en un recurso
+  «Archivo» marcando ensambles_3d_alumno.html como principal). Hay que respetar la subcarpeta «modelos».
+- En internet: https://eloiaa-hub.github.io/Ensambles-Dossier/  (alumnado: .../ensambles_3d_alumno.html)
+
+Enlaces directos: añadiendo #id al final de la dirección se abre ese ensamble, por ejemplo
+  ensambles_3d_alumno.html#mmT · #mmT/manual · #mmT/manual/5 · #mmT/errores  (también vale el número: #18).
+Para que los códigos QR del cuaderno funcionen, escribe en ⚙️ «Web del alumnado» la dirección donde lo hayas subido.
+
+Si falta la carpeta «modelos», el programa funciona igual, con herramientas dibujadas más sencillas.
+
+Licencias
+---------
+Programas: EUPL-1.2 · Manual y apuntes: CC BY-SA 4.0
+three.js y GLTFLoader: licencia MIT.
