@@ -18,7 +18,9 @@ a{color:var(--accent)}
 .wrap{max-width:1120px;margin:0 auto;padding:0 20px}
 header.top{background:var(--card);border-bottom:1px solid var(--line)}
 header.top .wrap{display:flex;align-items:center;gap:14px;min-height:58px}
-header.top b{font-size:17px} header.top nav{margin-left:auto;display:flex;gap:16px;flex-wrap:wrap}
+header.top b{font-size:17px}
+header.top .volver{text-decoration:none;color:var(--muted);font-size:14px;padding:5px 10px;border:1px solid var(--line);border-radius:6px;white-space:nowrap}
+header.top .volver:hover{color:var(--accent);border-color:var(--accent)} header.top nav{margin-left:auto;display:flex;gap:16px;flex-wrap:wrap}
 header.top nav a{text-decoration:none;color:var(--muted);font-size:14.5px} header.top nav a:hover{color:var(--accent)}
 .hero{padding:44px 0 30px}
 .hero .wrap{display:grid;grid-template-columns:1.05fr 1fr;gap:34px;align-items:center}
@@ -53,11 +55,11 @@ td a{font-weight:600}
 code{background:var(--soft);padding:1px 6px;border-radius:4px;font-size:.92em}
 .nota{background:var(--soft);border-left:4px solid var(--accent);padding:12px 15px;border-radius:6px;margin-top:16px;font-size:15px}
 footer{border-top:1px solid var(--line);padding:24px 0 40px;color:var(--muted);font-size:14px}
-@media (max-width:860px){.hero .wrap,.dos{grid-template-columns:1fr}.tres{grid-template-columns:1fr}header.top nav{display:none}.hero{padding-top:28px}}
+@media (max-width:860px){header.top b{font-size:15px;white-space:nowrap}.hero .wrap,.dos{grid-template-columns:1fr}.tres{grid-template-columns:1fr}header.top nav{display:none}.hero{padding-top:28px}}
 </style>
 </head>
 <body>
-<header class="top"><div class="wrap"><span aria-hidden="true">⬡</span><b>Ensambles de carpintería</b>
+<header class="top"><div class="wrap"><a class="volver" href="https://eloiaa-hub.github.io/" title="Volver al portal Eloiaasoft">← Eloiaasoft</a><span aria-hidden="true">⬡</span><b>Ensambles de carpintería</b>
 <nav><a href="#que">Qué es</a><a href="#ensambles">Los 21 ensambles</a><a href="#profesor">Para el profesorado</a><a href="#archivos">Archivos</a></nav></div></header>
 
 <div class="hero"><div class="wrap">
@@ -122,7 +124,7 @@ footer{border-top:1px solid var(--line);padding:24px 0 40px;color:var(--muted);f
   <p class="nota">Para usarlo sin internet o subirlo a Aules, descarga el repositorio completo (<b>Code → Download ZIP</b> en GitHub) y abre los archivos con doble clic. Mantén la carpeta <code>modelos</code> junto a los programas.</p>
 </div></section>
 
-<footer><div class="wrap">Ensambles de carpintería · Por Eloi A.A. · Programas con licencia EUPL-1.2 · Manual y apuntes con licencia CC BY-SA 4.0 · three.js y qrcode-generator con licencia MIT.</div></footer>
+<footer><div class="wrap">Ensambles de carpintería · Por Eloi A.A. · Parte de <a href="https://eloiaa-hub.github.io/">Eloiaasoft</a> · Programas con licencia EUPL-1.2 · Manual y apuntes con licencia CC BY-SA 4.0 · three.js y qrcode-generator con licencia MIT.</div></footer>
 <script>if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol)){addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script>
 </body>
 </html>
