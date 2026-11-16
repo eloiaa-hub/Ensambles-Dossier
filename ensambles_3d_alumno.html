@@ -4,6 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Ensambles de carpintería · Alumnado</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#005A9C">
+<link rel="icon" type="image/png" sizes="192x192" href="img/icono-192.png">
+<link rel="apple-touch-icon" href="img/icono-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Ensambles">
 <style>
 
 @page { size: A4; margin: 0 }
@@ -104,6 +111,7 @@ td, th { border: .25mm solid #000; padding: 0; text-align: center; font-size: 8p
 .proc-extra{margin-top:8px}
 .proc-extra .btn-action.on{background:#b5651d;border-color:#b5651d;color:#fff}
 #tErrores.on{background:#b5651d;color:#fff}
+.cargando{opacity:.75;cursor:progress!important}
 .enlace-row{display:flex;gap:6px;align-items:center;margin-top:8px;flex-wrap:wrap}
 .enlace-row .nota{font-size:11.5px;color:var(--text-muted)}
 #webAlumno{width:100%;background:var(--bg-panel);color:var(--text-main);border:1px solid var(--border-color);border-radius:4px;padding:4px 6px;font-size:12px}
@@ -315,7 +323,7 @@ html[data-alumno] .right-panel { width: 360px; }
   .top-bar-title { font-size: 13px; }
   .top-bar-title .ver-suite { display: none; }
   .top-bar > a:first-child { display: none; }
-  .top-bar a.btn-manual[href*=apuntes] { padding: 4px 8px; font-size: 12.5px; }
+  .top-bar a.btn-manual[href*=apuntes], .top-bar #alInstalar { padding: 4px 8px; font-size: 12.5px; }
   .al-sel { display: inline-flex; align-items: center; gap: 6px; order: 3; flex: 1 1 100%; justify-content: flex-start; padding: 7px 10px; font-size: 14px; background: var(--accent); color: #fff; border-color: var(--accent); min-width: 0; }
   .al-sel span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .top-bar-right { gap: 12px; }
@@ -385,6 +393,7 @@ html[data-alumno] .right-panel { width: 360px; }
             <input type="file" id="fLoad" accept=".json,application/json" hidden>
             <a class="btn-manual" href="manual_ensambles.html" target="_blank" rel="noopener" title="Manual completo (se abre en otra pestaña; debe estar en la misma carpeta que el programa)">📖 Manual</a>
             <a class="btn-manual" href="apuntes_ensambles_a_mano.html" target="_blank" rel="noopener" title="Apuntes: los 21 ensambles hechos a mano, paso a paso (se abre en otra pestaña)">📘 Apuntes</a>
+            <button class="btn-manual" id="alInstalar" hidden title="Instala la aplicación en el móvil para usarla en el taller sin conexión">📲 Instalar</button>
             <button class="icon-gear" id="bAyuda" title="Ayuda rápida">❓</button>
             <button class="icon-gear" id="bAjustes" title="Ajustes">⚙️</button>
         </div>
@@ -4239,7 +4248,7 @@ html[data-alumno] .right-panel { width: 360px; }
 } )();
 
 </script>
-<script src="modelos/herramientas_glb.js"></script>
+
 <script>/* ===== Núcleo CSG (basado en csg.js de Evan Wallace, licencia MIT) ===== */
 var CSG = (function(){
   var EPS = 1e-5;
@@ -9015,23 +9024,36 @@ if (typeof module !== 'undefined' && typeof window === 'undefined') module.expor
   // ================== Herramientas con modelos 3D (GLB) ==================
   // Si los modelos están cargados, sustituyen a las herramientas dibujadas con código. Coordenadas: los GLB vienen en metros;
   // cada herramienta se pasa a milímetros y a los mismos ejes que la herramienta de código a la que sustituye.
-  var GLB={};
-  (function(){
-    if(!THREE.GLTFLoader||!window.MODELOS_GLB) return;
-    var ld=new THREE.GLTFLoader();
-    Object.keys(MODELOS_GLB).forEach(function(k){
-      var s=atob(MODELOS_GLB[k]), u=new Uint8Array(s.length); for(var i=0;i<s.length;i++) u[i]=s.charCodeAt(i);
-      ld.parse(u.buffer,'',function(g){
-        var piezas=[]; g.scene.updateMatrixWorld(true);
-        g.scene.traverse(function(o){ if(!o.isMesh) return; var m=o.material;
-          if(m.map) m.map.encoding=THREE.LinearEncoding;
-          if(m.metalness!==undefined){ m.metalness=Math.min(m.metalness,0.3); m.roughness=Math.max(m.roughness,0.35); }
-          var geo=o.geometry.clone(); geo.applyMatrix4(new THREE.Matrix4().makeScale(1000,1000,1000).multiply(o.matrixWorld)); // en mm, ejes del modelo
-          piezas.push({nombre:o.name, geo:geo, mat:m}); });
-        GLB[k]=piezas;
-      },function(e){ console.warn('Modelo '+k+' no cargado',e); });
-    });
-  })();
+  // Los modelos (modelos/herramientas_glb.js, 2,8 MB) se descargan solo la primera vez que se entra en el proceso manual.
+  var GLB={}, GLB_ESTADO='', GLB_ESPERA=[];
+  function cargarModelos(cb){
+    if(GLB_ESTADO==='listo'||GLB_ESTADO==='fallo'){ cb(); return; }
+    GLB_ESPERA.push(cb); if(GLB_ESTADO==='cargando') return; GLB_ESTADO='cargando';
+    function fin(est){ if(GLB_ESTADO!=='cargando') return; GLB_ESTADO=est; var l=GLB_ESPERA; GLB_ESPERA=[]; l.forEach(function(f){ try{ f(); }catch(e){ console.error(e); } }); }
+    function parsear(){
+      if(!THREE.GLTFLoader||!window.MODELOS_GLB){ fin('fallo'); return; }
+      var ld=new THREE.GLTFLoader(), ks=Object.keys(MODELOS_GLB), pend=ks.length; if(!pend){ fin('fallo'); return; }
+      function uno(){ if(--pend===0) fin('listo'); }
+      ks.forEach(function(k){
+        var s=atob(MODELOS_GLB[k]), u=new Uint8Array(s.length); for(var i=0;i<s.length;i++) u[i]=s.charCodeAt(i);
+        ld.parse(u.buffer,'',function(g){
+          var piezas=[]; g.scene.updateMatrixWorld(true);
+          g.scene.traverse(function(o){ if(!o.isMesh) return; var m=o.material;
+            if(m.map) m.map.encoding=THREE.LinearEncoding;
+            if(m.metalness!==undefined){ m.metalness=Math.min(m.metalness,0.3); m.roughness=Math.max(m.roughness,0.35); }
+            var geo=o.geometry.clone(); geo.applyMatrix4(new THREE.Matrix4().makeScale(1000,1000,1000).multiply(o.matrixWorld)); // en mm, ejes del modelo
+            piezas.push({nombre:o.name, geo:geo, mat:m}); });
+          GLB[k]=piezas; uno();
+        },function(e){ console.warn('Modelo '+k+' no cargado',e); uno(); });
+      });
+      MODELOS_GLB=null; // ya no hace falta el texto base64
+    }
+    if(window.MODELOS_GLB){ parsear(); return; }
+    var sc=document.createElement('script'); sc.src='modelos/herramientas_glb.js';
+    sc.onload=parsear; sc.onerror=function(){ fin('fallo'); }; // sin la carpeta «modelos», se usan las herramientas dibujadas
+    setTimeout(function(){ if(GLB_ESTADO==='cargando') fin('fallo'); },45000);
+    document.head.appendChild(sc);
+  }
   // filas: ejes del programa en función de los ejes del modelo (X,Y,Z en mm); t: traslación
   function ejes(f, t){ return new THREE.Matrix4().set(f[0][0],f[0][1],f[0][2],t[0], f[1][0],f[1][1],f[1][2],t[1], f[2][0],f[2][1],f[2][2],t[2], 0,0,0,1); }
   // porPieza(nombre) puede devolver una matriz que se aplica antes, en los ejes del modelo (estirar la hoja, mover la regla…)
@@ -9734,9 +9756,15 @@ if (typeof module !== 'undefined' && typeof window === 'undefined') module.expor
           for(var k=0;k<=10;k++){ if(t.bb2.containsPoint(o.p0.clone().lerp(o.p1,k/10))) n++; } if(n>nmax){ nmax=n; mejor=t; } });
         if(mejor){ par.remove(o.mesh); mejor.o.mesh.add(o.mesh); } } });
   }
-  function entrarManual(modo){
+  function entrarManual(modo, alListo){
     modo=modo==='errores'?'errores':'manual';
     var f=modo==='errores'?ERRORES:PROC_MANUAL[current.id]; if(!f||!valid) return;
+    if(modo==='manual'&&GLB_ESTADO!=='listo'&&GLB_ESTADO!=='fallo'){ // primera vez: descarga de las herramientas 3D
+      var id0=current.id, bt=document.getElementById('tManual'), bp=document.getElementById('pManual');
+      [bt,bp].forEach(function(b){ if(b){ b.dataset.txt=b.dataset.txt||b.innerHTML; b.innerHTML='⏳ Cargando herramientas…'; b.classList.add('cargando'); } });
+      cargarModelos(function(){ [bt,bp].forEach(function(b){ if(b&&b.dataset.txt){ b.innerHTML=b.dataset.txt; b.classList.remove('cargando'); } });
+        if(current&&current.id===id0) entrarManual(modo, alListo); });
+      return; }
     stopPlay(); salirProceso(); salirManual(); limpiarManual();
     MAN.modo=modo; MAN.indep=modo==='errores'; MAN.centros={};
     MAN.poses={}; MAN.ocultos=[]; MAN.steps=f(values[current.id]); if(!MAN.indep) vincularAlDesperdicio(); MAN.activo=true; MAN.paso=-1;
@@ -9748,6 +9776,7 @@ if (typeof module !== 'undefined' && typeof window === 'undefined') module.expor
     document.getElementById('manPanel').hidden=false; document.getElementById('tabMontaje').classList.add('manual'); document.getElementById(MAN.indep?'tErrores':'tManual').classList.add('on'); document.getElementById(MAN.indep?'pErrores':'pManual').classList.add('on');
     var bt=document.querySelector('.ptabs button[data-tab=montaje]'); if(bt) bt.click();
     irPasoManual(-1,false);
+    if(alListo) alListo();
   }
   function camaraA(paso){
     var s=MAN.steps[paso], foco=s?s.foco:1, pose=s&&s.pose, to=new THREE.Vector3(), z=(s&&s.zoom)||(s&&/^(Sierra|Sujeta|Vuelve a tumbar|Tumba|Haz cortes)/.test(s.txt)?1.6:1.15);
@@ -9910,11 +9939,14 @@ if (typeof module !== 'undefined' && typeof window === 'undefined') module.expor
     var a=h.split(/[\/&?]/), k=a[0], j=LIST.filter(function(x){ return x.id===k||String(x.num)===k; })[0]; if(!j) return false;
     if(!current||current.id!==j.id) select(j.id);
     var modo=(a[1]||'').toLowerCase();
-    if(modo==='manual'&&PROC_MANUAL[j.id]){ entrarManual('manual'); var n=parseInt(a[2],10); if(n>0) irPasoManual(Math.min(n,MAN.steps.length)-1,true); }
+    if(modo==='manual'&&PROC_MANUAL[j.id]){ var n=parseInt(a[2],10); entrarManual('manual',function(){ if(n>0) irPasoManual(Math.min(n,MAN.steps.length)-1,true); }); }
     else if(modo==='errores'){ entrarManual('errores'); var n2=parseInt(a[2],10); if(n2>0) irPasoManual(Math.min(n2,MAN.steps.length)-1,true); }
     else if(MAN.activo) salirManual();
     return true; }
   window.addEventListener('hashchange',leerEnlace);
+  // Funcionar sin conexión cuando está publicado en una web (GitHub Pages): guarda los archivos en el móvil
+  if('serviceWorker' in navigator && /^https?:$/.test(location.protocol)){
+    window.addEventListener('load',function(){ navigator.serviceWorker.register('sw.js').catch(function(e){ console.warn('Sin modo sin conexión',e); }); }); }
   var first=LIST[0].id; try{ var s=localStorage.getItem(SEL); if(s) first=s; }catch(e){}
   resize(); if(!leerEnlace()) select(first); actualizarBotonManual(); resize();
   if(!MAN.activo&&!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)) startPlay();
@@ -9989,10 +10021,16 @@ if (typeof module !== 'undefined' && typeof window === 'undefined') module.expor
       '<p><b>6. 🔨 Proceso manual.</b> Muestra cómo se hace el ensamble en el taller con herramientas de mano: lápiz y escuadra, gramil, falsa escuadra, serrucho de costilla, formón y mazo. Avanza con «Paso ▶» (en el móvil, la barra de abajo pasa a controlar el proceso manual). Arriba se lee qué se hace y un consejo 💡 («Leer más»). Para volver, pulsa «✕ 🔨» o «Salir del proceso manual».</p>'+
       '<p><b>7. ⚠️ Errores.</b> «¿Qué pasa si…?»: los errores típicos al hacer el ensamble (serrar por dentro o por fuera de la línea, hombro torcido, gramil movido) y cómo se notan al montar. En verde, la posición correcta. Se avanza igual que en el proceso manual.</p>'+
       '<p><b>🔗 Enlace.</b> En «Cómo se monta», «Copiar enlace» copia una dirección que abre directamente el ensamble que estás viendo.</p>'+
+      '<p><b>📲 En el taller sin conexión.</b> Desde la web, pulsa «📲 Instalar» (Android, ordenador) o, en iPhone, <i>Compartir → Añadir a pantalla de inicio</i>. Ábrelo una vez con conexión: a partir de ahí funciona sin internet.</p>'+
       '<p><b>📘 Apuntes.</b> Los 21 ensambles hechos a mano, paso a paso, con imágenes y consejos: <a href="apuntes_ensambles_a_mano.html" target="_blank" rel="noopener">abrir los apuntes</a> (también en el botón «📘 Apuntes» de arriba).</p></div>';
     pv.hidden=false;
   });
   var cerrar=document.getElementById('pvClose'); cerrar.addEventListener('click',function(){ ['pvPrint','pvHtml'].forEach(function(id){ var x=document.getElementById(id); if(x) x.hidden=false; }); });
+  // Botón «Instalar» (Chrome, Edge, Android): solo aparece cuando el navegador lo permite
+  var bI=document.getElementById('alInstalar'), aviso=null;
+  window.addEventListener('beforeinstallprompt',function(e){ e.preventDefault(); aviso=e; bI.hidden=false; });
+  bI.addEventListener('click',function(){ if(!aviso) return; aviso.prompt(); aviso.userChoice.then(function(){ aviso=null; bI.hidden=true; }); });
+  window.addEventListener('appinstalled',function(){ bI.hidden=true; });
 })();
 </script>
 </body>

@@ -13,7 +13,9 @@
 | [`manual_ensambles.html`](manual_ensambles.html) · [PDF](manual_ensambles.pdf) | Manual de uso |
 | `modelos/` | Modelos 3D de las herramientas (GLB) |
 
-Funciona sin instalar nada y sin internet: descarga el repositorio (**Code → Download ZIP**) y abre los HTML con doble clic, manteniendo la carpeta `modelos` junto a los programas.
+**En el móvil, sin conexión:** abre la web y pulsa «📲 Instalar» (Android) o *Compartir → Añadir a pantalla de inicio* (iPhone). Con abrirla una vez con conexión, después funciona en el taller sin internet.
+
+También funciona sin instalar nada y sin internet: descarga el repositorio (**Code → Download ZIP**) y abre los HTML con doble clic, manteniendo la carpeta `modelos` junto a los programas.
 
 Enlaces directos a un ensamble: `ensambles_3d_alumno.html#mmT`, `#mmT/manual`, `#mmT/manual/5`, `#mmT/errores` (también vale el número: `#18`).
 
